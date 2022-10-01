@@ -121,7 +121,8 @@ def parse_status(homework):
     try:
         homework_status = homework.get('status')
     except KeyError as error:
-        logger.error(f'Отсутствует ключ homework_status для homeworks, {error}')
+        logger.error(
+            f'Отсутствует ключ для homeworks, {error}')
     try:
         verdict = HOMEWORK_STATUSES.get(homework_status)
     except KeyError as error:
@@ -180,7 +181,8 @@ def main():
                     send_message(bot, parse_status(new_hw_status[0]))
                     hw_status = new_hw_status
                     logger.info(
-                        'Статус домашней работы изменился и отправлен в телеграм'
+                        ('Статус домашней работы изменился и'
+                         ' отправлен в телеграм')
                     )
 
         except Exception as error:
@@ -194,6 +196,7 @@ def main():
             time.sleep(RETRY_TIME)
             current_timestamp = int(datetime.now().timestamp())
             logger.debug(f'Конец ожидания, timestamp = {current_timestamp}')
+
 
 if __name__ == '__main__':
     main()

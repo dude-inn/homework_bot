@@ -30,7 +30,8 @@ HOMEWORK_STATUSES = {
 
 logging.basicConfig(
     level=logging.DEBUG,
-    format='%(lineno)s - %(levelname)s - %(message)s - %(funcName)s - %(asctime)s'
+    format=('%(lineno)s - %(levelname)s - %(message)s'
+            ' - %(funcName)s - %(asctime)s')
 )
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -47,9 +48,11 @@ logger.addHandler(handler)
 
 
 def send_message(bot, message):
-    """Отправляет сообщение в Telegram чат, определяемый переменной окружения
+    """
+    Отправляет сообщение в Telegram чат, определяемый переменной окружения
      TELEGRAM_CHAT_ID. Принимает на вход два параметра: экземпляр класса Bot и
-      строку с текстом сообщения. """
+      строку с текстом сообщения.
+    """
     logger.info('Начало работы функции')
     try:
         bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
@@ -59,9 +62,11 @@ def send_message(bot, message):
 
 
 def get_api_answer(current_timestamp):
-    """Делает запрос к единственному эндпоинту API-сервиса. В качестве параметра
+    """
+    Делает запрос к единственному эндпоинту API-сервиса. В качестве параметра
      функция получает временную метку. В случае успешного запроса должна вернуть
-      ответ API, преобразовав его из формата JSON к типам данных Python """
+      ответ API, преобразовав его из формата JSON к типам данных Python
+    """
     logger.info('Начало работы функции get_api_answer()')
 
     params = {'from_date': current_timestamp}
@@ -79,10 +84,12 @@ def get_api_answer(current_timestamp):
 
 
 def check_response(response):
-    """Проверяет ответ API на корректность. В качестве параметра функция
+    """
+    Проверяет ответ API на корректность. В качестве параметра функция
      получает ответ API, приведенный к типам данных Python. Если ответ API
       соответствует ожиданиям, то функция должна вернуть список домашних работ
-       (он может быть и пустым), доступный в ответе API по ключу 'homeworks' """
+       (он может быть и пустым), доступный в ответе API по ключу 'homeworks'
+    """
     logger.info('Начало работы функции')
     if not isinstance(response, dict):
         message = 'Ошибка: response не является dict!'
@@ -97,10 +104,12 @@ def check_response(response):
 
 
 def parse_status(homework):
-    """Извлекает из информации о конкретной домашней работе статус этой работы.
+    """
+    Извлекает из информации о конкретной домашней работе статус этой работы.
      В качестве параметра функция получает только один элемент из списка домашних
       работ. В случае успеха, функция возвращает подготовленную для отправки в
-       Telegram строку, содержащую один из вердиктов словаря HOMEWORK_STATUSES. """
+       Telegram строку, содержащую один из вердиктов словаря HOMEWORK_STATUSES.
+    """
     logger.info('Начало работы функции')
     try:
         homework_name = homework.get('homework_name')
@@ -113,16 +122,21 @@ def parse_status(homework):
     try:
         verdict = HOMEWORK_STATUSES.get(homework_status)
     except KeyError as error:
-        logger.error(f'Отсутствует ключ homework_status для HOMEWORK_STATUSES, {error}')
+        logger.error(
+            f'Отсутствует ключ homework_status для HOMEWORK_STATUSES,'
+            f' {error}'
+        )
         return None
     logger.info(f'Новый статус работы {verdict}')
     return f'Изменился статус проверки работы "{homework_name}" на {verdict}'
 
 
 def check_tokens():
-    """Проверяет доступность переменных окружения, которые необходимы для
+    """
+    Проверяет доступность переменных окружения, которые необходимы для
      работы программы. Если отсутствует хотя бы одна переменная окружения
-      — функция должна вернуть False, иначе — True """
+      — функция должна вернуть False, иначе — True
+    """
     logger.info('Начало работы функции')
     if PRACTICUM_TOKEN is None:
         logger.info('Отсутствует PRACTICUM_TOKEN')
@@ -137,10 +151,12 @@ def check_tokens():
 
 
 def main():
-    """Основная логика работы бота. Последовательность действий:
+    """
+    Основная логика работы бота. Последовательность действий:
     1.Запрос к API. 2.Проверка ответа. 3.Если есть обновления —
     получение статуса работы из обновления и отправка сообщения в Telegram.
-    4. Выдержка и выполнение нового запроса."""
+    4. Выдержка и выполнение нового запроса.
+    """
     logger.info('Начало работы функции')
     if not check_tokens():
         logger.critical('Отсутствует один или несколько Токенов!')
@@ -160,7 +176,9 @@ def main():
                 if new_hw_status != hw_status:
                     send_message(bot, parse_status(new_hw_status[0]))
                     hw_status = new_hw_status
-                    logger.info('Статус домашней работы изменился и отправлен в телеграм')
+                    logger.info(
+                        'Статус домашней работы изменился и отправлен в телеграм'
+                    )
 
         except Exception as error:
             message = f'Сбой в работе программы: {error}'

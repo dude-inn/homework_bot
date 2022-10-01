@@ -8,7 +8,6 @@ from logging.handlers import RotatingFileHandler
 
 import requests
 import telegram
-from attr import exceptions
 from dotenv import load_dotenv
 
 load_dotenv()

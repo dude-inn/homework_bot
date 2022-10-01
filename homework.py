@@ -3,10 +3,12 @@ import os
 import sys
 import time
 from datetime import datetime
+from http import HTTPStatus
 from logging.handlers import RotatingFileHandler
 
 import requests
 import telegram
+from attr import exceptions
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -77,11 +79,14 @@ def get_api_answer(current_timestamp):
             headers=HEADERS,
             params=params,
         )
-        logger.info('Ответ API получен')
-        return response.json()
     except requests.RequestException as error:
         message = f'Код ответа API (RequestException): {error}'
         logger.error(msg=message)
+    if response.status_code != HTTPStatus.OK:
+        message = f'Ошибка доступа {response.status_code} к {ENDPOINT}'
+        logger.error(message)
+        raise requests.RequestException(message)
+    return response.json()
 
 
 def check_response(response):
@@ -94,9 +99,11 @@ def check_response(response):
     """
     logger.info('Начало работы функции')
     if not isinstance(response, dict):
-        message = 'Ошибка: response не является dict!'
+        message = 'Ошибка: ответ API не является dict!'
         logger.error(msg=message)
         raise TypeError(message)
+    if 'homeworks' not in response.keys():
+        raise KeyError('В ответе API нет ключа homeworks')
     homeworks = response.get('homeworks')
     if not isinstance(homeworks, list):
         message = 'Ошибка: homeworks не является list!'
@@ -114,24 +121,19 @@ def parse_status(homework):
     строку, содержащую один из вердиктов словаря HOMEWORK_STATUSES.
     """
     logger.info('Начало работы функции')
-    try:
-        homework_name = homework.get('homework_name')
-    except KeyError as error:
-        logger.error(f'Отсутствует ключ homework_name для homeworks, {error}')
-    try:
-        homework_status = homework.get('status')
-    except KeyError as error:
-        logger.error(
-            f'Отсутствует ключ для homeworks, {error}')
-    try:
-        verdict = HOMEWORK_STATUSES.get(homework_status)
-    except KeyError as error:
-        logger.error(
-            f'Отсутствует ключ homework_status для HOMEWORK_STATUSES,'
-            f' {error}'
-        )
-        return None
-    logger.info(f'Новый статус работы {verdict}')
+    if not isinstance(homework, dict):
+        raise TypeError('homework не является словарем')
+    if 'status' not in homework:
+        raise KeyError('homework не содержит ключа status')
+    if 'homework_name' not in homework:
+        raise KeyError('homework не содержит ключа homework_name')
+    homework_name = homework.get('homework_name')
+    homework_status = homework.get('status')
+    verdict = HOMEWORK_STATUSES.get(homework_status)
+    if verdict is None:
+        message = 'Ошибка статуса HOMEWORK_STATUSES'
+        logger.error(message)
+        raise KeyError(message)
     return f'Изменился статус проверки работы "{homework_name}" на {verdict}'
 
 

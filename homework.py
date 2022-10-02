@@ -29,11 +29,7 @@ HOMEWORK_STATUSES = {
     'rejected': 'Работа проверена: у ревьюера есть замечания.'
 }
 
-logging.basicConfig(
-    level=logging.DEBUG,
-    format=('%(lineno)s - %(levelname)s - %(message)s'
-            ' - %(funcName)s - %(asctime)s')
-)
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 handler = RotatingFileHandler(
@@ -69,7 +65,7 @@ def get_api_answer(current_timestamp):
     запроса должна вернуть ответ API, преобразовав его из формата
     JSON к типам данных Python
     """
-    logger.info('Начало работы функции get_api_answer()')
+    logger.info('Начало работы функции')
 
     params = {'from_date': current_timestamp}
     try:
@@ -81,8 +77,9 @@ def get_api_answer(current_timestamp):
     except requests.RequestException as error:
         message = f'Код ответа API (RequestException): {error}'
         logger.error(msg=message)
+        raise requests.RequestException(message)
     if response.status_code != HTTPStatus.OK:
-        message = f'Ошибка доступа {response.status_code} к {ENDPOINT}'
+        message = f'Ошибка доступа: {response.status_code} к {ENDPOINT}'
         logger.error(message)
         raise requests.RequestException(message)
     return response.json()
@@ -162,7 +159,7 @@ def main():
     получение статуса работы из обновления и отправка сообщения
     в Telegram. 4. Выдержка и выполнение нового запроса.
     """
-    logger.info('Начало работы функции')
+    logger.info('-------Начало работы функции---------')
     if not check_tokens():
         logger.critical('Отсутствует один или несколько Токенов!')
         sys.exit()
@@ -176,19 +173,19 @@ def main():
             logger.debug(f'timestamp = {current_timestamp}')
             response = get_api_answer(current_timestamp)
             homeworks = check_response(response)
-            if homeworks:
-                new_hw_status = homeworks[0].get('status')
-                if new_hw_status != hw_status:
-                    send_message(bot, parse_status(new_hw_status[0]))
-                    hw_status = new_hw_status
-                    logger.info(
-                        ('Статус домашней работы изменился и'
-                         ' отправлен в телеграм')
-                    )
+            if not homeworks:
+                continue
+            new_hw_status = homeworks[0].get('status')
+            if new_hw_status != hw_status:
+                send_message(bot, parse_status(new_hw_status[0]))
+                hw_status = new_hw_status
+                logger.info(
+                    'Статус домашней работы изменился и отправлен'
+                    ' в телеграм'
+                )
 
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
-            logger.error(f'Сбой в работе программы: {error}')
             if message != error_message:
                 send_message(bot, message)
                 error_message = message

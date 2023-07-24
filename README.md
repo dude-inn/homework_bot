@@ -13,7 +13,7 @@ cd ..
 ❗ Перейдите в нужный каталог для клонирования репозитория ❗
 
 Клонирование репозитория:
-git clone [https://github.com/GorsheninNikolay/API_telegram_bot](https://github.com/dude-inn/homework_bot)
+git clone https://github.com/dude-inn/homework_bot
 Перейти в каталог:
 cd API_telegram_bot
 Создание виртуальной среды:
